@@ -73,9 +73,19 @@ backend/src/main/resources/
 
 Chaque fonctionnalité pourra contenir `api` (contrôleurs et DTO), `application` (cas d’usage), `domain` (règles métier) et `infrastructure` (JPA et intégrations). Les contrôleurs ne manipuleront pas directement les entités de base de données.
 
-## Sécurité et configuration actuelle
+## Sécurité et authentification
 
-Spring Security est dans le projet, mais aucune authentification personnalisée n’est encore configurée. En attendant la prochaine étape, Spring Security protège par défaut les routes et crée un mot de passe temporaire visible dans les logs au démarrage. Ne branche pas encore le frontend et ne déploie pas cette configuration.
+L’API utilise des sessions Spring Security côté serveur ; le navigateur conserve leur identifiant dans un cookie HTTP-only. Les routes disponibles sont :
+
+- `GET /api/auth/csrf` : obtenir un jeton CSRF avant toute requête `POST`.
+- `POST /api/auth/register` : créer un compte avec `{ "email": "...", "password": "..." }`.
+- `POST /api/auth/login` : ouvrir une session avec le même format.
+- `GET /api/auth/me` : récupérer le compte associé à la session courante.
+- `POST /api/auth/logout` : fermer la session.
+
+Les appels depuis le frontend doivent inclure les cookies (`credentials: "include"`) et envoyer le jeton CSRF dans l’en-tête communiqué par `/api/auth/csrf` (actuellement `X-CSRF-TOKEN`) pour les requêtes `POST`. Après le login, récupère un nouveau jeton CSRF avant le prochain `POST`. En développement, l’origine Vite autorisée par défaut est `http://localhost:5173`; configure `APP_CORS_ALLOWED_ORIGIN` pour l’origine exacte du frontend dans les autres environnements.
+
+Les mots de passe sont hachés avec BCrypt et les comptes sont créés par la migration Flyway `V1__create_user_accounts.sql`. Ne désactive pas CSRF pour les sessions par cookie.
 
 Les identifiants PostgreSQL sont fournis par l’environnement, Hibernate ne modifie pas le schéma (`ddl-auto: validate`) et les erreurs HTTP ne divulguent ni message interne ni trace d’exception. Les secrets de production devront être configurés dans l’environnement de déploiement, jamais dans Git.
 
