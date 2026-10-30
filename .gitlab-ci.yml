@@ -1,0 +1,48 @@
+
+include:
+  - template: Jobs/SAST.gitlab-ci.yml
+  - template: Jobs/Secret-Detection.gitlab-ci.yml
+
+stages:
+  - package
+  - deploy
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+
+cache:
+  paths:
+    - .m2/repository/
+
+
+
+# 1 Analyse de qualité
+code_quality:
+  stage: test
+  image: maven:3.9-eclipse-temurin-21
+  script:
+    - chmod +x mvnw
+    - ./mvnw -B verify
+  allow_failure: false
+
+# 2. Construction de l'application
+build_application:
+  stage: package
+  image: maven:3.9-eclipse-temurin-21
+  script:
+    - chmod +x mvnw
+    - ./mvnw -B -DskipTests package
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 1 week
+
+# 3. Déploiement en production
+deploy_production:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo "Configurer ici le déploiement SSH"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
