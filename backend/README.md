@@ -46,7 +46,11 @@ $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 mvn -f backend\pom.xml spring-boot:run
 ```
 
-L’API écoute alors sur `http://localhost:8080`. L’application ne crée pas encore de tables ni de routes métier : les migrations Flyway et les premières API seront ajoutées au fil des étapes.
+L’API écoute alors sur `http://localhost:8080`. La route `GET /api/quizz` récupère 10 questions depuis Open Trivia Database et renvoie leur JSON.
+
+```powershell
+Invoke-RestMethod http://localhost:8080/api/quizz
+```
 
 ## Architecture cible
 
@@ -77,6 +81,7 @@ Chaque fonctionnalité pourra contenir `api` (contrôleurs et DTO), `application
 
 L’API utilise des sessions Spring Security côté serveur ; le navigateur conserve leur identifiant dans un cookie HTTP-only. Les routes disponibles sont :
 
+- `GET /api/quizz` : récupérer 10 questions depuis Open Trivia Database (route publique).
 - `GET /api/auth/csrf` : obtenir un jeton CSRF avant toute requête `POST`.
 - `POST /api/auth/register` : créer un compte avec `{ "email": "...", "password": "..." }`.
 - `POST /api/auth/login` : ouvrir une session avec le même format.
